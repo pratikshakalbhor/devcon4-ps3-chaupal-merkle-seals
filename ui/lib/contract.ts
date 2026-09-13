@@ -44,6 +44,13 @@ export const ABI = [
     outputs: [{ name: "", type: "bool" }],
   },
   {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
     type: "event",
     name: "SealClaimed",
     inputs: [

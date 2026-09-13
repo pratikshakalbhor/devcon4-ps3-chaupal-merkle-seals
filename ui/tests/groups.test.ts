@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getGroups, getRoot } from "@/lib/groups";
+import { getGroups, getMembers, getRoot } from "@/lib/groups";
 
 describe("lib/groups", () => {
   it("loads all 12 committed chaupal groups with names and stewards", async () => {
@@ -18,5 +18,17 @@ describe("lib/groups", () => {
       expect(root).toMatch(/^0x[0-9a-f]{64}$/);
       expect(root).not.toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
     }
+  });
+
+  it("returns the committed member list for a group", async () => {
+    const members = await getMembers(0);
+    expect(members.length).toBeGreaterThan(0);
+    for (const m of members) {
+      expect(m).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    }
+  });
+
+  it("returns an empty member list for an unknown group", async () => {
+    expect(await getMembers(99)).toEqual([]);
   });
 });

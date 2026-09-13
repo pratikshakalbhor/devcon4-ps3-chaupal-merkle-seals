@@ -16,6 +16,6 @@ contract DeployChaupalSeal is Script {
         vm.stopBroadcast();
         console2.log("ChaupalSeal deployed at", address(seal));
         console2.log("group0 steward:", seal.stewardOf(0));
-        console2.log("group0 root  :", seal.rootOf(0));
+        console2.log("group0 root  :", uint256(seal.rootOf(0)));
     }
 }

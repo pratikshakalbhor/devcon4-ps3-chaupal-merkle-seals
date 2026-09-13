@@ -8,8 +8,8 @@ contract** from `msg.sender` + `groupId`.
 > Status: **validation-complete.** 15 Forge tests green; live end-to-end smoke
 > test on `anvil` (deploy → steward sets root → member claims → duplicate
 > claim reverts → soul-bound transfer reverts) passing; UI lint/typecheck/
-> build clean + 6 unit tests. Nothing is committed — this file ships as part
-> of the review package.
+> build clean + 15 unit tests. Committed and pushed to GitHub under the
+> repo-local identity "Devcon PS3 Builder".
 
 ---
 
@@ -68,13 +68,14 @@ new member means a **new tree** for that group:
 1. Append the member's address to their group's `members` array in
    `data/groups.json`.
 2. Re-run `npm run trees` → `scripts/build-tree.mjs` rebuilds the tree,
-   recomputes `data/roots.json`, and re-issues proofs for every member.
+   recomputes `data/roots.json`, and re-issues proofs for every member. (This
+   only *builds*; it does not overwrite your edited `data/groups.json`.)
 3. The group's steward calls `setRoot(g, <new root>)` — via the **Steward
    console** (`/steward`, "Set root" form) or:
    ```bash
    cast send $SEAL_ADDRESS "setRoot(uint256,bytes32)" $g $NEW_ROOT --private-key $STEWARD_KEY --rpc-url $RPC_URL --from $STEWARD_ADDR
    ```
-4. The new member opens `/member`, their fresh proof is served from
+4. The new member opens `/claim`, their fresh proof is served from
    `data/proofs/`, and they claim. Existing members' proofs come along
    automatically (their inclusion is unchanged), so no existing member needs
    to re-claim.
@@ -149,7 +150,7 @@ them here.
 | 5 | Second claim by same member reverts | 10 | `_claimed[groupId][msg.sender]` **checked before** issuance at `:53`, **set after** the proof passes at `:62`. Test: `test_SecondClaimBySameMemberReverts`. |
 | 6 | Seal cannot be transferred | 8 | `_update` override reverts whenever both `from` and `to` are non-zero (`src/ChaupalSeal.sol:72-75`) — mint is allowed (`from == address(0)`), transfer/burn-on-live-token are not. OZ v5.7 exposes **no public `burn`** at all. Tests: `test_TransferBlocked` (transferFrom, safeTransferFrom, approved-transfer all revert `Soulbound`). |
 | 7 | Tree construction script committed | 5 | `scripts/generate-groups.mjs` + `scripts/build-tree.mjs` build all 12 trees from `data/groups.json` into `data/trees/`, `data/proofs/`, `data/roots.json`, `data/forge/`. Nothing is hardcoded: re-running `npm run trees` reproduces every root/proof. |
-| 8 | No credential in tracked files | 5 | `.gitignore` excludes `.env*`/`node_modules`/`out`/`cache`/`broadcast`; scan of every tracked file for 64-hex strings finds **only public Merkle hashes** plus Foundry's **public anvil dev keys** (disclosed below, §8). |
+| 8 | No credential in tracked files | 5 | `.gitignore` excludes `.env`/`ui/.env.local`/`ui/.env*.local` (and `.env*` generally) while `.env.example` templates stay tracked; a 64-hex private-key scan of every tracked file matches **only Merkle hashes** — zero private keys (dead `anvilKeys` field and smoke `KEY0` constant were removed; see §8). |
 | **Sum** | | **80** | |
 
 ## 4. Repo layout
@@ -158,8 +159,8 @@ them here.
 src/ChaupalSeal.sol        the contract (single file, 93 lines)
 test/ChaupalSeal.t.sol     15 scenario tests (fixtures from data/forge/)
 script/Deploy.s.sol        forge script: deploy with stewards from data/groups.json
-scripts/generate-groups.mjs deterministic 12-group generator (anvil accounts for the demo)
-scripts/build-tree.mjs     builds trees/proofs/roots from data/groups.json
+scripts/generate-groups.mjs sample-data generator (`npm run groups`; overwrites data/groups.json, anvil accounts for the demo — not real member data)
+scripts/build-tree.mjs     builds trees/proofs/roots from data/groups.json (`npm run trees`)
 scripts/live-smoke.sh      one-shot anvil end-to-end demo (deploy+setRoot+claim+reverts)
 data/groups.json           committed member lists (the only tree input)
 data/trees|proofs|roots|forge  generated artifacts (proofs per member per group)
@@ -187,6 +188,8 @@ stores root; member claim mints token 1 and sets flags; **second claim →
 ## 6. Local setup
 
 ```bash
+git clone --recurse-submodules https://github.com/pratikshakalbhor/devcon4-ps3-chaupal-merkle-seals.git
+cd devcon4-ps3-chaupal-merkle-seals
 npm install                    # root (tree scripts; also installs base-node deps)
 cd ui && npm install && cd ..   # UI
 npm run trees                  # regenerate trees/roots/proofs from data/groups.json
@@ -194,21 +197,29 @@ forge test                     # 15 contract tests
 bash scripts/live-smoke.sh     # anvil end-to-end demo (deploy + setRoot + claim + reverts)
 ```
 
+`npm run trees` only *builds* from `data/groups.json` — it never rewrites the
+member lists, so hand-edits survive. `npm run groups` re-seeds the sample
+lists from scratch (run it only when you want to reset to demo data). See
+`scripts/README.md` for the full steward workflow and the leaf covenant.
+
 UI (requires a deployed contract):
 
 ```bash
 cd ui
 cp .env.example .env.local
-# set NEXT_PUBLIC_SEAL_ADDRESS to the address printed by live-smoke.sh
+# set NEXT_PUBLIC_CONTRACT_ADDRESS to the address printed by live-smoke.sh
 npm run dev                    # http://localhost:3000
 ```
 
 - **Steward console** (`/steward`): connect with an anvil account (e.g.
-  MetaMask pointed at `http://127.0.0.1:8545`); accounts 0–9 steward groups
-  0–9. Set the committed root or paste a custom root.
-- **Member portal** (`/member`): pick your chaupal; the page loads your proof
-  from `data/forge/` and mints your sealed token; a second attempt shows
-  "Already claimed".
+  MetaMask pointed at `http://127.0.0.1:8545`); the page reads
+  `stewardOf(0..11)` on-chain, lists only the chaupals your wallet actually
+  stewards, shows the local member-list root vs the on-chain root with an
+  in sync / out of date badge, and pushes a root with one button.
+- **Member portal** (`/claim`): pick one of the 12 chaupals; the page looks
+  up your proof, shows found / not-found / already-claimed, mints via
+  `claim`, and surfaces revert reasons in plain language (e.g. "root not
+  set — ask your steward to press Update root").
 
 ## 7. What was intentionally left out
 
@@ -224,8 +235,20 @@ npm run dev                    # http://localhost:3000
 
 ## 8. Credentials disclosure
 
-`data/groups.json` embeds Foundry's **publicly-known anvil development keys**
-(`anvilKeys`, `0xac0974…ff80` etc.). These are the well-known test keys from
-`foundry-rs/foundry` and are not secrets — they are shipped in every Foundry
-installation and tutorial. No other private keys, mnemonics, or RPC secrets
-appear anywhere in the repository.
+**No private keys are committed anywhere in this repository.** A 64-hex scan of
+every tracked file matches only Merkle hashes (`data/roots.json`, `trees/`,
+`proofs/`, `forge/`). Two cleanup commits removed the last private-key-format
+strings:
+
+- the dead `anvilKeys` array (Foundry's publicly-published anvil dev keys) that
+  used to live in `data/groups.json` / `scripts/generate-groups.mjs` — it was
+  written but never read by anything;
+- the hardcoded `KEY0` in `scripts/live-smoke.sh` — the script now **derives
+  the dev key at runtime from anvil's own startup output**, so no key literal
+  exists in a committed file.
+
+The sample member/steward *addresses* (anvil accounts from `foundry-rs/foundry`,
+e.g. `0xf39F…2266`) are public test accounts, not secrets. `.env` and
+`ui/.env.local` are gitignored local only; `.env.example` files ship with
+placeholder values (`your_private_key_here`, zero address). No mnemonics or
+credential-bearing URLs appear in tracked files.

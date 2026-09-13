@@ -8,6 +8,8 @@ export function AccountBar() {
   return (
     <nav className="bar">
       <Link href="/">Chaupal Seal</Link>
+      <Link href="/steward">Steward</Link>
+      <Link href="/claim">Claim</Link>
       <span className="spacer" />
       {error ? <span className="err">{error}</span> : null}
       {account ? (

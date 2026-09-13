@@ -1,3 +1,18 @@
+// SAMPLE-DATA GENERATOR (test/example data only — not real member data).
+//
+// Seeds data/groups.json with 12 chaupal groups for local testing (anvil):
+//   groups 0-9 use anvil's well-known public accounts as stewards/members;
+//   groups 10-11 use sha256-derived placeholder addresses (no known key).
+// It OVERWRITES data/groups.json from scratch — run it only when you want to
+// reset the sample lists, NOT after you hand-edited members. To rebuild trees
+// after editing data/groups.json, run `npm run trees` instead (see
+// scripts/README.md).
+//
+// NOTE ON KEYS: this script commits NO private keys. It only references anvil's
+// *publicly known* account addresses (foundry-rs/foundry). The anvil signing
+// key used by scripts/live-smoke.sh is derived at runtime from anvil's own
+// startup output, never stored in the repo.
+
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -35,19 +50,6 @@ const ANVIL = [
   "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
 ];
 
-const ANVIL_KEYS = [
-  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-  "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
-  "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
-  "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6",
-  "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a",
-  "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
-  "0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e",
-  "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
-  "0xdbda1821b80551c9d65939329250298aa3472ba22feea895c8328aabc1d5a16f",
-  "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6",
-];
-
 function address(seed) {
   return getAddress(
     "0x" + createHash("sha256").update(seed).digest("hex").slice(0, 40),
@@ -68,14 +70,14 @@ function groups() {
 async function main() {
   const out = path.join(ROOT, "data", "groups.json");
   await fs.mkdir(path.dirname(out), { recursive: true });
-  await fs.writeFile(
-    out,
-    JSON.stringify(
-      { chainId: 31337, anvilKeys: ANVIL_KEYS, groups: groups() },
-      null,
-      2,
-    ) + "\n",
-  );
+await fs.writeFile(
+      out,
+      JSON.stringify(
+        { chainId: 31337, groups: groups() },
+        null,
+        2,
+      ) + "\n",
+    );
   console.log(`wrote ${out}`);
 }
 

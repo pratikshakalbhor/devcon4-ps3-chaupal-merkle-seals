@@ -6,6 +6,8 @@ forge-cache/
 .env
 .env.*
 !.env.example
+ui/.env.local
+ui/.env*.local
 next-env.d.ts
 *.tsbuildinfo
 .DS_Store

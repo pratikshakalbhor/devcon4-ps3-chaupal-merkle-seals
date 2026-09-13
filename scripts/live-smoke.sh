@@ -1,17 +1,27 @@
 #!/usr/bin/env bash
 set -uo pipefail
 export RPC=http://127.0.0.1:8545
-KEY0=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# No private keys are committed in this repo. anvil prints its deterministic
+# dev key for account 0 at startup, so we read it from anvil's own output.
+anvil --port 8545 >/tmp/chaupal-anvil.log 2>&1 &
+ANVIL_PID=$!
+trap 'kill $ANVIL_PID 2>/dev/null' EXIT
+for _ in $(seq 1 40); do
+  grep -q "Private Keys" /tmp/chaupal-anvil.log 2>/dev/null && break
+  sleep 0.5
+done
+KEY0=$(awk '/Private Keys/{f=1; next} f && /^\(0\)/{sub(/^\(0\)[[:space:]]+/, ""); print; exit}' /tmp/chaupal-anvil.log)
+if [ -z "$KEY0" ]; then
+  echo "ERROR: could not read anvil account-0 private key from startup log" >&2
+  exit 1
+fi
+echo "anvil account 0 key derived at runtime (not committed): ${KEY0:0:10}..."
 
 STEWARDS=$(node -e "const d=require('./data/groups.json');console.log('['+d.groups.map(g=>g.steward).join(',')+']')")
 ROOT0=$(node -e "console.log(require('./data/roots.json')['0'])")
 PROOF0=$(node -e "const p=require('./data/proofs/group-0.json');const h=p[Object.keys(p)[0]];console.log('['+h.join(',')+']')")
 MEMBER0=$(node -e "console.log(Object.keys(require('./data/proofs/group-0.json'))[0])")
-
-anvil --port 8545 --silent >/tmp/chaupal-anvil.log 2>&1 &
-ANVIL_PID=$!
-trap 'kill $ANVIL_PID 2>/dev/null' EXIT
-sleep 2
 
 DEPLOY=$(forge create src/ChaupalSeal.sol:ChaupalSeal \
   --broadcast --rpc-url $RPC --private-key $KEY0 --constructor-args "$STEWARDS")

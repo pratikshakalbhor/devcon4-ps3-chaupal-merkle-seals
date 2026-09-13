@@ -20,6 +20,14 @@ export async function getGroups(): Promise<GroupInfo[]> {
   }));
 }
 
+export async function getMembers(groupId: number): Promise<string[]> {
+  const raw = await fs.readFile(path.join(ROOT, "groups.json"), "utf8");
+  const data = JSON.parse(raw) as {
+    groups: { name: string; steward: string; members: string[] }[];
+  };
+  return data.groups[groupId]?.members ?? [];
+}
+
 export async function getRoot(groupId: number): Promise<string> {
   const raw = await fs.readFile(path.join(ROOT, "roots.json"), "utf8");
   const roots = JSON.parse(raw) as Record<string, string>;
