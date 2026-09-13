@@ -1,0 +1,17 @@
+{
+  "name": "chaupal-seal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chaupal Seal - soul-bound membership seals for 12 chaupals (PS3)",
+  "scripts": {
+    "trees": "node scripts/generate-groups.mjs && node scripts/build-tree.mjs",
+    "smoke": "bash scripts/live-smoke.sh",
+    "test": "forge test",
+    "test:ui": "npm --prefix ui test",
+    "build:ui": "npm --prefix ui run build"
+  },
+  "dependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.8",
+    "ethers": "^6.17.0"
+  }
+}
