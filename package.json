@@ -4,6 +4,8 @@
   "private": true,
   "description": "Chaupal Seal - soul-bound membership seals for 12 chaupals (PS3)",
   "scripts": {
+    "dev": "npm --prefix ui run dev",
+    "dev:ui": "npm --prefix ui run dev",
     "groups": "node scripts/generate-groups.mjs",
     "trees": "node scripts/build-tree.mjs",
     "smoke": "bash scripts/live-smoke.sh",
