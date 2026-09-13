@@ -1,9 +1,11 @@
 node_modules/
-next-env.d.ts
-dist/
-.DS_Store
+out/
 cache/
+broadcast/
+forge-cache/
 .env
 .env.*
 !.env.example
-forge-cache/
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
