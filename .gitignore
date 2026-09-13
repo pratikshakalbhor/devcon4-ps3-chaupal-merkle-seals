@@ -1,0 +1,9 @@
+node_modules/
+next-env.d.ts
+dist/
+.DS_Store
+cache/
+.env
+.env.*
+!.env.example
+forge-cache/
