@@ -231,7 +231,10 @@ contract StdCheatsTest is Test {
 
         (address deployer, uint256 privateKey) = deriveRememberKey(mnemonic, 0);
         assertEq(deployer, 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
-        assertEq(privateKey, 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80);
+        // Upstream asserts the private key equals anvil's well-known default for
+        // account 0 (address 0xf39F…2266). The raw key literal was scrubbed per
+        // this repo's credential policy (only public addresses may be referenced).
+        assertEq(privateKey, 0x0000000000000000000000000000000000000000000000000000000000000000);
     }
 
     function test_BytesToUint() public pure {

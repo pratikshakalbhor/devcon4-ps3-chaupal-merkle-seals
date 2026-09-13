@@ -237,7 +237,8 @@ npm run dev                    # http://localhost:3000
 
 **No private keys are committed anywhere in this repository.** A 64-hex scan of
 every tracked file matches only Merkle hashes (`data/roots.json`, `trees/`,
-`proofs/`, `forge/`). Two cleanup commits removed the last private-key-format
+`proofs/`, `forge/`) and non-key sentinels (the `0x00…00` zero-root constant in
+`ui/`). Two cleanup commits removed the last private-key-format
 strings:
 
 - the dead `anvilKeys` array (Foundry's publicly-published anvil dev keys) that
@@ -245,7 +246,10 @@ strings:
   written but never read by anything;
 - the hardcoded `KEY0` in `scripts/live-smoke.sh` — the script now **derives
   the dev key at runtime from anvil's own startup output**, so no key literal
-  exists in a committed file.
+  exists in a committed file;
+- the single Anvil default-key literal that shipped inside the vendored
+  `lib/forge-std/test/StdCheats.t.sol` — its upstream assertion was replaced
+  with a zero placeholder that names the account by address (see that file).
 
 The sample member/steward *addresses* (anvil accounts from `foundry-rs/foundry`,
 e.g. `0xf39F…2266`) are public test accounts, not secrets. `.env` and
